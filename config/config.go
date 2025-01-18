@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/joho/godotenv"
+	"github.com/hildanku/ndangdigarap/models"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -12,16 +12,16 @@ import (
 
 func ConnectDatabase() *gorm.DB {
 
-	err := godotenv.Load("../.env")
-	if err != nil {
-		log.Fatal("err load env")
-	}
+	// err := godotenv.Load("../.env")
+	// if err != nil {
+	// 	log.Fatal("err load env")
+	// }
 
 	mysqlDatabase := os.Getenv("MYSQL_DATABASE")
 	mysqlUser := os.Getenv("MYSQL_USER")
 	mysqlPassword := os.Getenv("MYSQL_PASSWORD")
 	mysqlHost := os.Getenv("MYSQL_HOST")
-	mysqlPort := os.Getenv("MYSQL_PORT")
+	mysqlPort := "3306"
 
 	log.Println(mysqlPort)
 
@@ -36,6 +36,11 @@ func ConnectDatabase() *gorm.DB {
 		log.Fatal("fail connect db", err)
 	}
 	log.Println("success")
+
+	err = db.AutoMigrate(&models.User{})
+	if err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
 
 	return db
 }

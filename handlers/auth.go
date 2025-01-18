@@ -1,12 +1,13 @@
 package handlers
 
 import (
-	"os"
+	"log"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/hildanku/ndangdigarap/models"
+	"github.com/hildanku/ndangdigarap/utils"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -25,52 +26,38 @@ func RegisterUser(db *gorm.DB) fiber.Handler {
 		user := new(models.User)
 
 		if err := c.BodyParser(user); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Invalid request payload",
-			})
+			return utils.AppResponse(c, fiber.StatusBadRequest, "Invalid request payload", nil)
 		}
 
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.PasswordHash), bcrypt.DefaultCost)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to hash password",
-			})
+			return utils.AppResponse(c, fiber.StatusInternalServerError, "Failed to hash password", nil)
 		}
 
 		user.PasswordHash = string(hashedPassword)
 		if err := db.Create(user).Error; err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to register user",
-			})
+			return utils.AppResponse(c, fiber.StatusInternalServerError, "Failed to register user", nil)
 		}
 
-		return c.JSON(fiber.Map{
-			"message": "User registered successfully",
-		})
+		return utils.AppResponse(c, fiber.StatusCreated, "User registered successfully", nil)
 	}
 }
 
-func LoginUser(db *gorm.DB) fiber.Handler {
+func LoginUser(db *gorm.DB, jwtSecret string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		loginRequest := new(LoginRequest)
 
 		if err := c.BodyParser(loginRequest); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Invalid request payload",
-			})
+			return utils.AppResponse(c, fiber.StatusBadRequest, "Invalid request payload", nil)
 		}
 
 		var user models.User
 		if err := db.Where("username = ?", loginRequest.Username).First(&user).Error; err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid username or password",
-			})
+			return utils.AppResponse(c, fiber.StatusUnauthorized, "Invalid username or password", nil)
 		}
 
 		if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(loginRequest.Password)); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid username or password",
-			})
+			return utils.AppResponse(c, fiber.StatusUnauthorized, "Invalid username or password", nil)
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -78,14 +65,13 @@ func LoginUser(db *gorm.DB) fiber.Handler {
 			"exp":      time.Now().Add(time.Hour * 72).Unix(),
 		})
 
-		tokenString, err := token.SignedString(os.Getenv("JWT_SECRET"))
+		tokenString, err := token.SignedString([]byte(jwtSecret))
+		log.Println("access", jwtSecret)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to generate token",
-			})
+			return utils.AppResponse(c, fiber.StatusInternalServerError, "Failed to generate token", nil)
 		}
 
-		return c.JSON(fiber.Map{
+		return utils.AppResponse(c, fiber.StatusOK, "Login successful", fiber.Map{
 			"token": tokenString,
 		})
 	}

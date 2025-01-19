@@ -78,12 +78,25 @@ func LoginUser(db *gorm.DB, jwtSecret string) fiber.Handler {
 }
 
 func ProtectedEndpoint(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	username := claims["username"].(string)
+	userToken, ok := c.Locals("user").(*jwt.Token)
+	if !ok || userToken == nil {
+		return utils.AppResponse(c, fiber.StatusUnauthorized, "Unauthorized", nil)
+	}
 
-	return c.JSON(fiber.Map{
-		"message":  "This is a protected endpoint",
-		"username": username,
+	claims, ok := userToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Invalid token claims",
+		})
+	}
+
+	username, ok := claims["username"].(string)
+	if !ok {
+		return utils.AppResponse(c,  fiber.StatusUnauthorized, "Invalid Token", nil)
+	}
+
+
+	return utils.AppResponse(c, fiber.StatusOK, "This is a protected endpoint", fiber.Map{
+		"username" : username,
 	})
 }

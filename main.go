@@ -3,41 +3,18 @@ package main
 import (
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/hildanku/ndangdigarap/config"
 	"github.com/hildanku/ndangdigarap/handlers"
 	"github.com/hildanku/ndangdigarap/middlewares"
-	"github.com/joho/godotenv"
+	"github.com/hildanku/ndangdigarap/utils"
 )
 
 func main() {
 
 	// https://stackoverflow.com/questions/54456186/how-to-fix-environment-variables-not-working-while-running-from-system-d-service
-	pwd, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	log.Println("pwd", pwd)
-
-	//use ../.env because main.go inside /cmd
-	err = godotenv.Load(filepath.Join(pwd, "./.env"))
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	log.Println("JWT Secret:", os.Getenv("JWT_ACCESS_SECRET"))
-
-	// err := godotenv.Load(".env")
-	// if err != nil {
-	// 	log.Fatalf("Error loading .env file: %v", err)
-	// }
-
-	// jwtSecret := os.Getenv("JWT_ACCESS_SECRET")
-	// if jwtSecret == "" {
-	// 	log.Fatal("JWT_SSECRET is not set in .env")
-	// }
-	// log.Println("JWT Secret:", jwtSecret)
+	utils.LoadEnv()
 
 	db := config.ConnectDatabase()
 

@@ -6,6 +6,8 @@ services:
       POSTGRES_USER: ndangdigarap
       POSTGRES_PASSWORD: ndangdigarap
       POSTGRES_DB: ndangdigarap
+    ports:
+      - 5432:5432
     volumes:
       - pgdata:/var/lib/postgresql/data
 

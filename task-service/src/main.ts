@@ -1,9 +1,8 @@
 import { Hono } from 'hono'
+import taskRoutes from './module/tasks/task.route'
 
 const app = new Hono()
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
+app.route('/api', taskRoutes)
 
 export default app

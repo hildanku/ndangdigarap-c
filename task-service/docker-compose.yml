@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres
+    restart: always
+    environment: 
+      POSTGRES_USER: ndangdigarap
+      POSTGRES_PASSWORD: ndangdigarap
+      POSTGRES_DB: ndangdigarap
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - 5005:8080
+
+volumes:
+  pgdata:

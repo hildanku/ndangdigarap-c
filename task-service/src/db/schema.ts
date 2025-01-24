@@ -8,6 +8,6 @@ export const taskTable = pgTable("tasks", {
     status: varchar().default('pending'),
     priority: varchar().default('delete'),
     deadline: varchar(),
-    createdAt: timestamp().defaultNow(),
-    updatedAt: timestamp().defaultNow()
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow()
 })

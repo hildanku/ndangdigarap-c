@@ -60,19 +60,23 @@ func LoginUser(db *gorm.DB, jwtSecret string) fiber.Handler {
 			return utils.AppResponse(c, fiber.StatusUnauthorized, "Invalid username or password", nil)
 		}
 
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"username": user.Username,
-			"exp":      time.Now().Add(time.Hour * 72).Unix(),
-		})
-
-		tokenString, err := token.SignedString([]byte(jwtSecret))
-		log.Println("access", jwtSecret)
+		accessToken, err := utils.GenerateToken(user.ID)
+		log.Println("LOG FROM AUTH", accessToken)
 		if err != nil {
-			return utils.AppResponse(c, fiber.StatusInternalServerError, "Failed to generate token", nil)
+			return utils.AppResponse(c, fiber.StatusInternalServerError, "Failed to generate access token", nil)
 		}
 
+		refreshToken := utils.GenerateRefreshToken()
+		expiresAt := time.Now().Add(7 * 24 * time.Hour)
+		db.Create(&models.Token{
+			Token:     refreshToken,
+			UserID:    user.ID,
+			ExpiresAt: expiresAt,
+		})
+
 		return utils.AppResponse(c, fiber.StatusOK, "Login successful", fiber.Map{
-			"token": tokenString,
+			"access_token":  accessToken,
+			"refresh_token": refreshToken,
 		})
 	}
 }
@@ -92,11 +96,37 @@ func ProtectedEndpoint(c *fiber.Ctx) error {
 
 	username, ok := claims["username"].(string)
 	if !ok {
-		return utils.AppResponse(c,  fiber.StatusUnauthorized, "Invalid Token", nil)
+		return utils.AppResponse(c, fiber.StatusUnauthorized, "Invalid Token", nil)
 	}
 
-
 	return utils.AppResponse(c, fiber.StatusOK, "This is a protected endpoint", fiber.Map{
-		"username" : username,
+		"username": username,
 	})
+}
+
+func RefreshToken(db *gorm.DB, jwtSecret string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		refreshToken := c.FormValue("refresh_token")
+		if refreshToken == "" {
+			return utils.AppResponse(c, fiber.StatusBadRequest, "Refresh token is required", nil)
+		}
+
+		var token models.Token
+		if err := db.Where("token = ?", refreshToken).First(&token).Error; err != nil {
+			return utils.AppResponse(c, fiber.StatusUnauthorized, "Invalid refresh token", nil)
+		}
+
+		if time.Now().After(token.ExpiresAt) {
+			return utils.AppResponse(c, fiber.StatusUnauthorized, "Refresh token expired", nil)
+		}
+
+		accessToken, err := utils.GenerateToken(token.UserID)
+		if err != nil {
+			return utils.AppResponse(c, fiber.StatusInternalServerError, "Failed to generate token", nil)
+		}
+
+		return utils.AppResponse(c, fiber.StatusOK, "Token refreshed", fiber.Map{
+			"access_token": accessToken,
+		})
+	}
 }

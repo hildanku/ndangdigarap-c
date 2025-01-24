@@ -37,7 +37,10 @@ func ConnectDatabase() *gorm.DB {
 	}
 	log.Println("success")
 
-	err = db.AutoMigrate(&models.User{})
+	err = db.AutoMigrate(
+		&models.User{},
+		&models.Token{},
+	)
 	if err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}

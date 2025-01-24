@@ -28,8 +28,11 @@ func main() {
 
 	app := fiber.New()
 	app.Post("/register", handlers.RegisterUser(db))
-	app.Post("/login", handlers.LoginUser(db, os.Getenv("JWT_SECRET")))
-	app.Get("/healthcheck", handlers.Hello)
+	app.Post("/login", handlers.LoginUser(db, os.Getenv("JWT_ACCESS_SECRET")))
+	// app.Get("/healthcheck", handlers.Hello)
+	app.Get("/healthcheck", handlers.HealthCheck(db))
+	app.Post("/refresh", handlers.RefreshToken(db, os.Getenv("JWT_ACCESS_SECRET")))
+	app.Get("/validate", handlers.ValidateToken(os.Getenv("JWT_ACCESS_SECRET")))
 
 	api := app.Group("/api", middlewares.JWTMiddleware)
 	api.Get("/protected", handlers.ProtectedEndpoint)

@@ -20,4 +20,8 @@ export class TaskRepository {
         return task
     }
 
+    async create() {
+        
+    }
+
 }

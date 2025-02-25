@@ -1,6 +1,7 @@
 import { Context } from "hono";
+import { ContentfulStatusCode } from "hono/utils/http-status";
 
-export const appResponse = (c: Context, status: number, message: string, results: any) => {
+export const appResponse = (c: Context, status: ContentfulStatusCode, message: string, results: any) => {
     const responseData: responseData = {
         message,
         results,

@@ -5,4 +5,7 @@ const app = new Hono()
 
 app.route('/api', taskRoutes)
 
-export default app
+export default {
+    port: 5010,
+    fetch: app.fetch
+}

@@ -1,5 +1,5 @@
 import { integer, pgTable, timestamp, varchar } from 'drizzle-orm/pg-core'
- 
+
 export const taskTable = pgTable("tasks", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     user: integer('user').notNull(),
@@ -11,3 +11,5 @@ export const taskTable = pgTable("tasks", {
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow()
 })
+
+export type Task = typeof taskTable.$inferInsert

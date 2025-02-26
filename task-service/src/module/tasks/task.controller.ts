@@ -35,6 +35,11 @@ export const getTaskById = async (c: Context) => {
 
 export const createTask = async (c: Context) => {
     const task: Task = await c.req.json()
+
+    const u = c.get('user')
+    task.user = u.user_id
+    console.log(u)
+
     try {
         const newTask = await taskSvc.create(task)
         return appResponse(c, 201, 'task created', newTask)
